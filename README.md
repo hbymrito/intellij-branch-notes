@@ -30,3 +30,7 @@ JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home" \
 ```
 
 The plugin ZIP is created under `build/distributions/`.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
