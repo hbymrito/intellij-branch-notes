@@ -3,14 +3,14 @@
 An IntelliJ IDEA plugin that displays Git branch notes in this form:
 
 ```text
-feature/develop-YT03085 [导入线下病历]
-feature/develop-YT03084 [导入线下处方]
+feature/user-profile [Add user profile page]
+fix/login-timeout [Fix login timeout handling]
 ```
 
 Notes use Git's native local branch description storage:
 
 ```bash
-git config branch.feature/develop-YT03085.description "导入线下病历"
+git config branch.feature/user-profile.description "Add user profile page"
 ```
 
 IDEA's Git Log branch dashboard shows each local branch followed by its note. The separate status-bar widget shows the current branch and note; click it to edit or clear notes, or to check out a branch.
