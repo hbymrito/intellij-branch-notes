@@ -1,0 +1,30 @@
+<idea-plugin>
+    <id>com.github.hbymrito.branchnotes</id>
+    <name>Git Branch Notes</name>
+    <vendor>hbymrito</vendor>
+
+    <description><![CDATA[
+        Displays local Git branch descriptions next to branch names in a status bar widget and popup.
+        Branch notes are stored using Git's native <code>branch.&lt;name&gt;.description</code> configuration.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="com.github.hbymrito.branchnotes.BranchNotesStartupActivity"/>
+        <statusBarWidgetFactory
+            id="GitBranchNotes"
+            implementation="com.github.hbymrito.branchnotes.BranchNotesWidgetFactory"/>
+    </extensions>
+
+    <projectListeners>
+        <listener
+            class="com.github.hbymrito.branchnotes.BranchNotesRefreshListener"
+            topic="git4idea.repo.GitRepositoryChangeListener"/>
+        <listener
+            class="com.github.hbymrito.branchnotes.BranchNotesRefreshListener"
+            topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+    </projectListeners>
+</idea-plugin>

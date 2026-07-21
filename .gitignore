@@ -1,0 +1,9 @@
+.gradle/
+.gradle-user-home/
+.idea/
+.intellijPlatform/
+build/
+out/
+local.properties
+*.iml
+tasks/
