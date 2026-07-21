@@ -1,7 +1,7 @@
-<idea-plugin>
+<idea-plugin url="https://github.com/hbymrito/intellij-branch-notes">
     <id>com.github.hbymrito.branchnotes</id>
     <name>Git Branch Notes</name>
-    <vendor>hbymrito</vendor>
+    <vendor url="https://github.com/hbymrito" email="chen062059@gmail.com">hbymrito</vendor>
 
     <description><![CDATA[
         Displays local Git branch descriptions next to branch names in a status bar widget and popup.
