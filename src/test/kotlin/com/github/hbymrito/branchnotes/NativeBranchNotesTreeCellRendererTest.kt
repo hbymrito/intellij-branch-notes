@@ -41,17 +41,17 @@ class NativeBranchNotesTreeCellRendererTest {
 
     @Test
     fun `appends note to Git Log dashboard local branch row`() {
-        val text = SimpleColoredComponent().apply { append("develop-YT03085") }
+        val text = SimpleColoredComponent().apply { append("user-profile") }
         val renderer =
             NativeBranchNotesTreeCellRenderer(panelRenderer(text)) { branchName, repositoryPath ->
-                assertEquals("feature/develop-YT03085", branchName)
+                assertEquals("feature/user-profile", branchName)
                 assertEquals(null, repositoryPath)
-                "导入线下病历"
+                "Add user profile page"
             }
 
         renderer.getTreeCellRendererComponent(
             JTree(),
-            createDashboardBranchNode("feature/develop-YT03085", "develop-YT03085"),
+            createDashboardBranchNode("feature/user-profile", "user-profile"),
             false,
             false,
             true,
@@ -59,7 +59,7 @@ class NativeBranchNotesTreeCellRendererTest {
             false,
         )
 
-        assertEquals("develop-YT03085 [导入线下病历]", text.getCharSequence(false).toString())
+        assertEquals("user-profile [Add user profile page]", text.getCharSequence(false).toString())
     }
 
     private fun panelRenderer(text: SimpleColoredComponent): TreeCellRenderer =

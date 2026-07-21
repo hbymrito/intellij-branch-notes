@@ -56,3 +56,9 @@ intellijPlatform {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.jar {
+    from("LICENSE") {
+        into("META-INF")
+    }
+}

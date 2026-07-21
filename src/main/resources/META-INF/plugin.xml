@@ -4,9 +4,23 @@
     <vendor url="https://github.com/hbymrito" email="chen062059@gmail.com">hbymrito</vendor>
 
     <description><![CDATA[
-        Displays local Git branch descriptions next to branch names in a status bar widget and popup.
-        Branch notes are stored using Git's native <code>branch.&lt;name&gt;.description</code> configuration.
+        Displays Git branch notes next to local branch names in IntelliJ IDEA.
+        <ul>
+            <li>Annotates local branches in the Git Log branch dashboard.</li>
+            <li>Shows the current branch and its note in the status bar.</li>
+            <li>Lets you edit, clear, and search branch notes from the status-bar popup.</li>
+            <li>Stores notes locally using Git's native <code>branch.&lt;name&gt;.description</code> configuration.</li>
+        </ul>
+        No external service or project file is required.
     ]]></description>
+
+    <change-notes><![CDATA[
+        <ul>
+            <li>Initial JetBrains Marketplace release.</li>
+            <li>Displays local branch notes in the Git Log branch dashboard and status bar.</li>
+            <li>Supports editing, clearing, searching, and checking out local branches.</li>
+        </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>Git4Idea</depends>

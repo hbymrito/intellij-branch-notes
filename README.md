@@ -17,6 +17,14 @@ IDEA's Git Log branch dashboard shows each local branch followed by its note. Th
 
 The secondary Git Branches popup is intentionally not modified. This keeps the plugin out of IDEA's global AWT event path and avoids adding work to unrelated menus, buttons, and dialogs.
 
+## Usage
+
+1. Click the branch note widget in the status bar.
+2. Select a local branch and choose **Edit Note**.
+3. Enter a note. The Git Log branch dashboard and status bar refresh automatically.
+
+Notes stay in the local repository's Git configuration and are not pushed to remotes.
+
 ## Development
 
 Requirements:
