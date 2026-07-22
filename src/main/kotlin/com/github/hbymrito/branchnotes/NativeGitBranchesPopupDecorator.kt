@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -19,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import git4idea.repo.GitRepository
 import java.awt.Component
 import java.awt.Container
+import java.beans.PropertyChangeListener
 import java.util.Collections
 import java.util.WeakHashMap
 import javax.swing.JTree
@@ -34,17 +36,34 @@ class BranchNotesStartupActivity : ProjectActivity {
 class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
     private val service = BranchNotesService.getInstance(project)
     private val decoratedTrees = Collections.newSetFromMap(WeakHashMap<JTree, Boolean>())
-    private val scannedRoots = Collections.newSetFromMap(WeakHashMap<Component, Boolean>())
     private var observedContentManager: ContentManager? = null
+    private var observedContent: Content? = null
+    private var pendingDecorationRoot: Component? = null
+    private var disposed = false
+
+    private val contentPropertyChangeListener =
+        PropertyChangeListener { event ->
+            if (event.propertyName != Content.PROP_COMPONENT) return@PropertyChangeListener
+            (event.oldValue as? Component)?.let(::cancelDecoration)
+            (event.newValue as? Component)?.let(::scheduleDecoration)
+        }
 
     private val contentManagerListener =
         object : ContentManagerListener {
             override fun contentAdded(event: ContentManagerEvent) {
-                scheduleDecoration(event.content.component)
+                if (observedContentManager?.isSelected(event.content) == true) {
+                    observeSelectedContent()
+                }
             }
 
             override fun selectionChanged(event: ContentManagerEvent) {
-                scheduleDecoration(event.content.component)
+                observeSelectedContent()
+            }
+
+            override fun contentRemoved(event: ContentManagerEvent) {
+                cancelDecoration(event.content.component)
+                if (observedContent === event.content) setObservedContent(null)
+                observeSelectedContent()
             }
         }
 
@@ -57,8 +76,11 @@ class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
         connection.subscribe(
             ToolWindowManagerListener.TOPIC,
             object : ToolWindowManagerListener {
-                override fun toolWindowRegistered(id: String) {
-                    if (id == ToolWindowId.VCS) scheduleToolWindowBinding()
+                override fun toolWindowsRegistered(
+                    ids: List<String>,
+                    toolWindowManager: ToolWindowManager,
+                ) {
+                    if (ToolWindowId.VCS in ids) scheduleToolWindowBinding(toolWindowManager)
                 }
 
                 override fun toolWindowShown(toolWindow: ToolWindow) {
@@ -71,49 +93,90 @@ class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
     }
 
     override fun dispose() {
+        disposed = true
+        setObservedContent(null)
         observedContentManager?.removeContentManagerListener(contentManagerListener)
         observedContentManager = null
+        pendingDecorationRoot = null
         decoratedTrees.clear()
-        scannedRoots.clear()
     }
 
-    private fun scheduleToolWindowBinding() {
+    private fun scheduleToolWindowBinding(
+        toolWindowManager: ToolWindowManager? = null,
+    ) {
         ApplicationManager.getApplication().invokeLater {
-            if (project.isDisposed) return@invokeLater
-            ToolWindowManager.getInstance(project)
+            if (disposed || project.isDisposed) return@invokeLater
+            (toolWindowManager ?: ToolWindowManager.getInstance(project))
                 .getToolWindow(ToolWindowId.VCS)
                 ?.let { bindToolWindow(it, false) }
         }
     }
 
     private fun bindToolWindow(toolWindow: ToolWindow, ensureContentManager: Boolean) {
+        if (disposed) return
+        val shouldEnsureContentManager = ensureContentManager || toolWindow.isVisible
         val contentManager =
-            (if (ensureContentManager) toolWindow.contentManager else toolWindow.contentManagerIfCreated)
+            (if (shouldEnsureContentManager) toolWindow.contentManager else toolWindow.contentManagerIfCreated)
                 ?: return
         if (observedContentManager !== contentManager) {
+            setObservedContent(null)
             observedContentManager?.removeContentManagerListener(contentManagerListener)
+            pendingDecorationRoot = null
             contentManager.addContentManagerListener(contentManagerListener)
             observedContentManager = contentManager
         }
-        contentManager.contents.forEach { scheduleDecoration(it.component) }
+        observeSelectedContent()
     }
 
-    private fun scheduleDecoration(root: Component) {
-        if (!scannedRoots.add(root)) return
-        ApplicationManager.getApplication().invokeLater {
-            if (!project.isDisposed) decorateTrees(root)
+    private fun observeSelectedContent() {
+        setObservedContent(observedContentManager?.selectedContent)
+    }
+
+    private fun setObservedContent(content: Content?) {
+        if (observedContent === content) {
+            content?.component?.let(::scheduleDecoration)
+            return
+        }
+
+        observedContent?.let { previous ->
+            previous.removePropertyChangeListener(contentPropertyChangeListener)
+            cancelDecoration(previous.component)
+        }
+        observedContent = content
+        content?.let { selected ->
+            selected.addPropertyChangeListener(contentPropertyChangeListener)
+            scheduleDecoration(selected.component)
         }
     }
 
-    private fun decorateTrees(component: Component) {
-        if (component is JTree) decorateTree(component)
-        if (component is Container) component.components.forEach(::decorateTrees)
+    private fun scheduleDecoration(root: Component) {
+        if (disposed) return
+        if (pendingDecorationRoot === root) return
+        pendingDecorationRoot = root
+        ApplicationManager.getApplication().invokeLater {
+            if (disposed || project.isDisposed || pendingDecorationRoot !== root) return@invokeLater
+            pendingDecorationRoot = null
+            decorateTrees(root)
+        }
     }
 
-    private fun decorateTree(tree: JTree) {
-        val delegate = tree.cellRenderer ?: return
-        if (delegate is NativeBranchNotesTreeCellRenderer) return
-        if (!isNativeRenderer(delegate)) return
+    private fun cancelDecoration(root: Component) {
+        if (pendingDecorationRoot === root) pendingDecorationRoot = null
+    }
+
+    private fun decorateTrees(component: Component): Boolean {
+        if (component is JTree) return decorateTree(component)
+        if (component !is Container) return false
+        return component.components.any(::decorateTrees)
+    }
+
+    private fun decorateTree(tree: JTree): Boolean {
+        val delegate = tree.cellRenderer ?: return false
+        if (delegate is NativeBranchNotesTreeCellRenderer) {
+            decoratedTrees.add(tree)
+            return true
+        }
+        if (!isNativeRenderer(delegate)) return false
 
         tree.cellRenderer =
             NativeBranchNotesTreeCellRenderer(delegate) { branchName, repositoryPath ->
@@ -121,6 +184,7 @@ class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
             }
         decoratedTrees.add(tree)
         tree.repaint()
+        return true
     }
 
     private fun isNativeRenderer(renderer: TreeCellRenderer): Boolean {

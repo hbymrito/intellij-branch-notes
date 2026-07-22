@@ -16,9 +16,9 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>Initial JetBrains Marketplace release.</li>
-            <li>Displays local branch notes in the Git Log branch dashboard and status bar.</li>
-            <li>Supports editing, clearing, searching, and checking out local branches.</li>
+            <li>Fixes Git Log branch notes not appearing after IDEA startup until switching tabs.</li>
+            <li>Limits startup decoration work to the selected Git Log content.</li>
+            <li>Replaces deprecated and scheduled-for-removal IntelliJ Platform API usages.</li>
         </ul>
     ]]></change-notes>
 
