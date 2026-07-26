@@ -14,7 +14,7 @@ import javax.swing.JComponent
 object BranchNotesPopup {
     fun show(project: Project, anchor: JComponent) {
         val service = BranchNotesService.getInstance(project)
-        val entries = service.snapshot.entries
+        val entries = service.snapshot.localEntries
         if (entries.isEmpty()) {
             service.reloadAsync()
             return

@@ -179,8 +179,8 @@ class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
         if (!isNativeRenderer(delegate)) return false
 
         tree.cellRenderer =
-            NativeBranchNotesTreeCellRenderer(delegate) { branchName, repositoryPath ->
-                service.snapshot.noteFor(branchName, repositoryPath)
+            NativeBranchNotesTreeCellRenderer(delegate) { branchName, refType, repositoryPath ->
+                service.snapshot.noteFor(branchName, refType, repositoryPath)
             }
         decoratedTrees.add(tree)
         tree.repaint()
@@ -204,9 +204,10 @@ class GitLogBranchNotesDecorator(private val project: Project) : Disposable {
 
 internal class NativeBranchNotesTreeCellRenderer(
     private val delegate: TreeCellRenderer,
-    private val noteProvider: (branchName: String, repositoryPath: String?) -> String?,
+    private val noteProvider:
+        (branchName: String, refType: BranchRefType, repositoryPath: String?) -> String?,
 ) : TreeCellRenderer {
-    private val localBranchCache = WeakHashMap<Any, LocalBranchRef>()
+    private val branchCache = WeakHashMap<Any, BranchRef>()
 
     override fun getTreeCellRendererComponent(
         tree: JTree,
@@ -227,24 +228,24 @@ internal class NativeBranchNotesTreeCellRenderer(
     private fun findNote(value: Any?): String? {
         val userObject = TreeUtil.getUserObject(value)
         val branch =
-            localBranchCache[userObject]
-                ?: extractLocalBranch(userObject)?.also { localBranchCache[userObject] = it }
+            branchCache[userObject]
+                ?: extractBranch(userObject)?.also { branchCache[userObject] = it }
                 ?: return null
-        return noteProvider(branch.name, branch.repositoryPath)
+        return noteProvider(branch.name, branch.refType, branch.repositoryPath)
     }
 
-    private fun extractLocalBranch(userObject: Any?): LocalBranchRef? {
+    private fun extractBranch(userObject: Any?): BranchRef? {
         if (userObject == null) return null
         return extractDashboardBranch(userObject)
     }
 
-    private fun extractDashboardBranch(userObject: Any): LocalBranchRef? {
+    private fun extractDashboardBranch(userObject: Any): BranchRef? {
         if (!hasTypeInHierarchy(userObject.javaClass, DASHBOARD_REF_DESCRIPTOR_CLASS)) return null
 
         return runCatching {
                 val refInfo = userObject.javaClass.getMethod("getRefInfo").invoke(userObject)
                 val isLocal = refInfo.javaClass.getMethod("isLocalBranch").invoke(refInfo) as? Boolean
-                if (isLocal != true) return null
+                    ?: return null
 
                 val branchName =
                     refInfo.javaClass.getMethod("getBranchName").invoke(refInfo) as? String
@@ -253,7 +254,11 @@ internal class NativeBranchNotesTreeCellRenderer(
                     refInfo.javaClass.getMethod("getRepositories").invoke(refInfo) as? List<*>
                 val repositoryPath =
                     (repositories?.singleOrNull() as? GitRepository)?.root?.path
-                LocalBranchRef(branchName, repositoryPath)
+                BranchRef(
+                    branchName,
+                    if (isLocal) BranchRefType.LOCAL else BranchRefType.REMOTE,
+                    repositoryPath,
+                )
             }
             .getOrNull()
     }
@@ -273,7 +278,11 @@ internal class NativeBranchNotesTreeCellRenderer(
         return component.components.firstNotNullOfOrNull(::findMainTextComponent)
     }
 
-    private data class LocalBranchRef(val name: String, val repositoryPath: String?)
+    private data class BranchRef(
+        val name: String,
+        val refType: BranchRefType,
+        val repositoryPath: String?,
+    )
 
     companion object {
         private const val DASHBOARD_REF_DESCRIPTOR_CLASS =

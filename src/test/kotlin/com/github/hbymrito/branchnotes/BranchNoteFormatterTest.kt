@@ -31,8 +31,27 @@ class BranchNoteFormatterTest {
     }
 
     @Test
+    fun `round trips remote config key in plugin namespace`() {
+        val branch = "origin/feature/release.2026/user-profile"
+        val key = BranchNoteFormatter.configKey(branch, BranchRefType.REMOTE)
+
+        assertEquals("branchnotes.remote.$branch.description", key)
+        assertEquals(
+            branch,
+            BranchNoteFormatter.branchNameFromConfigKey(key, BranchRefType.REMOTE),
+        )
+        assertNull(BranchNoteFormatter.branchNameFromConfigKey(key, BranchRefType.LOCAL))
+    }
+
+    @Test
     fun `rejects unrelated config keys`() {
         assertNull(BranchNoteFormatter.branchNameFromConfigKey("branch.feature.remote"))
         assertNull(BranchNoteFormatter.branchNameFromConfigKey("branch..description"))
+        assertNull(
+            BranchNoteFormatter.branchNameFromConfigKey(
+                "branchnotes.remote..description",
+                BranchRefType.REMOTE,
+            )
+        )
     }
 }

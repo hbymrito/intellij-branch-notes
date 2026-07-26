@@ -4,21 +4,25 @@
     <vendor url="https://github.com/hbymrito" email="chen062059@gmail.com">hbymrito</vendor>
 
     <description><![CDATA[
-        Displays Git branch notes next to local branch names in IntelliJ IDEA.
+        Displays local Git branch notes next to local and remote branch names in IntelliJ IDEA.
         <ul>
-            <li>Annotates local branches in the Git Log branch dashboard.</li>
-            <li>Shows the current branch and its note in the status bar.</li>
-            <li>Lets you edit, clear, and search branch notes from the status-bar popup.</li>
-            <li>Stores notes locally using Git's native <code>branch.&lt;name&gt;.description</code> configuration.</li>
+            <li>Annotates local and remote branches in the Git Log branch dashboard.</li>
+            <li>Lets you add, edit, and delete notes from native single-branch action menus.</li>
+            <li>Copies a remote note once when creating a new local tracking branch.</li>
+            <li>Copies a local note once when Push creates a remote branch with an exact source mapping.</li>
+            <li>Optionally shows the current local branch and its note in the status bar.</li>
+            <li>Stores all notes locally in the repository's Git configuration.</li>
         </ul>
         No external service or project file is required.
     ]]></description>
 
     <change-notes><![CDATA[
         <ul>
-            <li>Fixes Git Log branch notes not appearing after IDEA startup until switching tabs.</li>
-            <li>Limits startup decoration work to the selected Git Log content.</li>
-            <li>Replaces deprecated and scheduled-for-removal IntelliJ Platform API usages.</li>
+            <li>Adds locally stored notes for remote branches.</li>
+            <li>Adds native branch actions for creating, editing, and deleting notes.</li>
+            <li>Copies remote notes to newly created local tracking branches without overwriting local notes.</li>
+            <li>Copies local notes to remote branches created by IntelliJ IDEA Push without overwriting remote notes.</li>
+            <li>Makes the optional status-bar widget disabled by default.</li>
         </ul>
     ]]></change-notes>
 
@@ -40,5 +44,20 @@
         <listener
             class="com.github.hbymrito.branchnotes.BranchNotesRefreshListener"
             topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+        <listener
+            class="com.github.hbymrito.branchnotes.BranchNotesRefreshListener"
+            topic="git4idea.push.GitPushListener"/>
     </projectListeners>
+
+    <actions>
+        <group id="BranchNotes.BranchActions">
+            <action
+                id="BranchNotes.EditRemark"
+                class="com.github.hbymrito.branchnotes.EditBranchNoteAction"/>
+            <action
+                id="BranchNotes.DeleteRemark"
+                class="com.github.hbymrito.branchnotes.DeleteBranchNoteAction"/>
+            <add-to-group group-id="Git.Branch" anchor="last"/>
+        </group>
+    </actions>
 </idea-plugin>

@@ -1,7 +1,10 @@
 package com.github.hbymrito.branchnotes
 
 import com.intellij.ui.SimpleColoredComponent
+import git4idea.GitBranch
 import git4idea.GitLocalBranch
+import git4idea.GitStandardRemoteBranch
+import git4idea.repo.GitRemote
 import java.awt.Component
 import java.awt.event.AWTEventListener
 import javax.swing.JPanel
@@ -24,7 +27,8 @@ class NativeBranchNotesTreeCellRendererTest {
     @Test
     fun `does not annotate non-branch rows`() {
         val text = SimpleColoredComponent().apply { append("本地") }
-        val renderer = NativeBranchNotesTreeCellRenderer(panelRenderer(text)) { _, _ -> "不应显示" }
+        val renderer =
+            NativeBranchNotesTreeCellRenderer(panelRenderer(text)) { _, _, _ -> "不应显示" }
 
         renderer.getTreeCellRendererComponent(
             JTree(),
@@ -43,8 +47,13 @@ class NativeBranchNotesTreeCellRendererTest {
     fun `appends note to Git Log dashboard local branch row`() {
         val text = SimpleColoredComponent().apply { append("user-profile") }
         val renderer =
-            NativeBranchNotesTreeCellRenderer(panelRenderer(text)) { branchName, repositoryPath ->
+            NativeBranchNotesTreeCellRenderer(panelRenderer(text)) {
+                branchName,
+                refType,
+                repositoryPath,
+                ->
                 assertEquals("feature/user-profile", branchName)
+                assertEquals(BranchRefType.LOCAL, refType)
                 assertEquals(null, repositoryPath)
                 "Add user profile page"
             }
@@ -62,12 +71,55 @@ class NativeBranchNotesTreeCellRendererTest {
         assertEquals("user-profile [Add user profile page]", text.getCharSequence(false).toString())
     }
 
+    @Test
+    fun `appends note to Git Log dashboard remote branch row`() {
+        val text = SimpleColoredComponent().apply { append("user-profile") }
+        val renderer =
+            NativeBranchNotesTreeCellRenderer(panelRenderer(text)) {
+                branchName,
+                refType,
+                repositoryPath,
+                ->
+                assertEquals("origin/feature/user-profile", branchName)
+                assertEquals(BranchRefType.REMOTE, refType)
+                assertEquals(null, repositoryPath)
+                "Remote review branch"
+            }
+        val remote =
+            GitRemote(
+                "origin",
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                emptyList(),
+            )
+
+        renderer.getTreeCellRendererComponent(
+            JTree(),
+            createDashboardBranchNode(
+                GitStandardRemoteBranch(remote, "feature/user-profile"),
+                "user-profile",
+            ),
+            false,
+            false,
+            true,
+            0,
+            false,
+        )
+
+        assertEquals("user-profile [Remote review branch]", text.getCharSequence(false).toString())
+    }
+
     private fun panelRenderer(text: SimpleColoredComponent): TreeCellRenderer =
         TreeCellRenderer { _: JTree, _: Any?, _: Boolean, _: Boolean, _: Boolean, _: Int, _: Boolean ->
             JPanel().apply { add(text) } as Component
         }
 
     private fun createDashboardBranchNode(branchName: String, displayName: String): Any {
+        return createDashboardBranchNode(GitLocalBranch(branchName), displayName)
+    }
+
+    private fun createDashboardBranchNode(branch: GitBranch, displayName: String): Any {
         val branchInfoClass = Class.forName("git4idea.ui.branch.dashboard.BranchInfo")
         val branchInfoConstructor = branchInfoClass.constructors.single { it.parameterCount == 5 }
         val countersType = branchInfoConstructor.parameterTypes[3]
@@ -75,7 +127,7 @@ class NativeBranchNotesTreeCellRendererTest {
         val branchInfo =
             branchInfoConstructor
                 .newInstance(
-                    GitLocalBranch(branchName),
+                    branch,
                     false,
                     false,
                     emptyCounters,

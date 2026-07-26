@@ -1,7 +1,8 @@
 package com.github.hbymrito.branchnotes
 
 object BranchNoteFormatter {
-    private const val CONFIG_PREFIX = "branch."
+    private const val LOCAL_CONFIG_PREFIX = "branch."
+    private const val REMOTE_CONFIG_PREFIX = "branchnotes.remote."
     private const val CONFIG_SUFFIX = ".description"
 
     fun display(branchName: String, note: String?): String {
@@ -15,10 +16,25 @@ object BranchNoteFormatter {
             ?.replace(Regex("\\s+"), " ")
             ?.takeIf { it.isNotEmpty() }
 
-    fun configKey(branchName: String): String = "$CONFIG_PREFIX$branchName$CONFIG_SUFFIX"
+    fun configKey(branchName: String, refType: BranchRefType = BranchRefType.LOCAL): String {
+        val prefix =
+            when (refType) {
+                BranchRefType.LOCAL -> LOCAL_CONFIG_PREFIX
+                BranchRefType.REMOTE -> REMOTE_CONFIG_PREFIX
+            }
+        return "$prefix$branchName$CONFIG_SUFFIX"
+    }
 
-    fun branchNameFromConfigKey(key: String): String? {
-        if (!key.startsWith(CONFIG_PREFIX) || !key.endsWith(CONFIG_SUFFIX)) return null
-        return key.removePrefix(CONFIG_PREFIX).removeSuffix(CONFIG_SUFFIX).takeIf { it.isNotEmpty() }
+    fun branchNameFromConfigKey(
+        key: String,
+        refType: BranchRefType = BranchRefType.LOCAL,
+    ): String? {
+        val prefix =
+            when (refType) {
+                BranchRefType.LOCAL -> LOCAL_CONFIG_PREFIX
+                BranchRefType.REMOTE -> REMOTE_CONFIG_PREFIX
+            }
+        if (!key.startsWith(prefix) || !key.endsWith(CONFIG_SUFFIX)) return null
+        return key.removePrefix(prefix).removeSuffix(CONFIG_SUFFIX).takeIf { it.isNotEmpty() }
     }
 }

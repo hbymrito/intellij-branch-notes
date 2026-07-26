@@ -21,6 +21,8 @@ class BranchNotesWidgetFactory : StatusBarWidgetFactory {
 
     override fun isAvailable(project: Project): Boolean = true
 
+    override fun isEnabledByDefault(): Boolean = false
+
     override fun createWidget(project: Project): StatusBarWidget {
         project.service<GitLogBranchNotesDecorator>()
         return BranchNotesWidget(project)
