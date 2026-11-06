@@ -25,7 +25,7 @@ dependencies {
         if (localIdea.exists()) {
             local(localIdea)
         } else {
-            intellijIdea("2026.2")
+            intellijIdea("2026.3")
         }
         bundledModule("intellij.platform.vcs.dvcs")
         bundledModule("intellij.platform.vcs.dvcs.impl")
@@ -44,7 +44,7 @@ kotlin {
 intellijPlatform {
     pluginConfiguration {
         ideaVersion {
-            sinceBuild = "262"
+            sinceBuild = "263"
         }
     }
 

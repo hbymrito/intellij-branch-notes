@@ -36,10 +36,12 @@ All notes stay in the local repository's Git configuration and are not pushed to
 
 ## Development
 
+Version 0.2.1 targets IntelliJ IDEA 2026.3 (build 263) and later. Use version 0.2.0 for IDEA 2026.2.
+
 Requirements:
 
-- IntelliJ IDEA 2026.2 at `~/Applications/IntelliJ IDEA.app`, or access to download the 2026.2 platform
-- JDK 25; the JBR bundled with IDEA 2026.2 is sufficient
+- IntelliJ IDEA 2026.3 at `~/Applications/IntelliJ IDEA.app`, or access to download the 2026.3 platform
+- JDK 25; the JBR bundled with IDEA 2026.3 is sufficient
 
 ```bash
 JAVA_HOME="$HOME/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home" \

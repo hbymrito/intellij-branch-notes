@@ -18,15 +18,13 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>Adds locally stored notes for remote branches.</li>
-            <li>Adds native branch actions for creating, editing, and deleting notes.</li>
-            <li>Copies remote notes to newly created local tracking branches without overwriting local notes.</li>
-            <li>Copies local notes to remote branches created by IntelliJ IDEA Push without overwriting remote notes.</li>
-            <li>Makes the optional status-bar widget disabled by default.</li>
+            <li>Updates the build target to IntelliJ IDEA 2026.3.</li>
+            <li>Declares the platform VCS dependency required by the modularized IDE.</li>
         </ul>
     ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.platform.vcs</depends>
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
